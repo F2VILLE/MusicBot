@@ -1,1 +1,1 @@
-# MusicBot
+# DiscordBot

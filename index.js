@@ -7,7 +7,7 @@ const Discord = require("discord.js"),
 require("dotenv").config()
 
 client.commands = new Discord.Collection()
-
+client.waitForMP3 = []
 const players = new Discord.Collection()
 
 fs.readdirSync("./events/").forEach(file => {
@@ -17,11 +17,17 @@ fs.readdirSync("./events/").forEach(file => {
     client.on(eventName, (...args) => { event.run(client, ...args) })
 })
 
-
 fs.readdirSync("./commands/").forEach(file => {
     if (!file.endsWith(".js")) return
     const command = require(`./commands/${file}`)
     client.commands.set(command.options.name, command)
+})
+
+client.on("waitForMP3", interaction => {
+    client.waitForMP3.push(interaction.user.id)
+    setTimeout(() => {
+        client.waitForMP3.splice(client.waitForMP3.indexOf(interaction.user.id), 1)
+    }, 60000)
 })
 
 client.on("nowPlaying", (interaction) => {
@@ -32,7 +38,7 @@ client.on("nowPlaying", (interaction) => {
                 author: { name: song.author.name, icon_url: song.author.thumbnails[0].url },
                 title: "💽 Now Playing : " + song.title,
                 image: { url: song.thumbnail.url },
-                footer: { text: interaction.member.user.tag, icon_url: interaction.member.user.displayAvatarURL({ dynamic: true }) },
+                footer: { text: song.member.user.tag, icon_url: song.member.user.displayAvatarURL({ dynamic: true }) },
                 color: "#0099ff"
             }
         ],
@@ -64,7 +70,6 @@ client.on("nowPlaying", (interaction) => {
     }).catch(e => {
         console.log(e)
     })
-
 })
 
 function secondsToTime(rawseconds) {
@@ -139,54 +144,98 @@ client.on("resumeSong", async (interaction) => {
 client.on("playSong", async (interaction) => {
     const guildId = interaction.guildId
     console.log("PLAYSONG EVENT")
-    console.log(interaction.guildId + " == " + interaction.guild?.id)
     if (players.get(guildId)?.queue.length) {
         console.log(players.get(guildId)?.queue)
         const song = players.get(guildId).queue[0]
-        const stream = await play.stream('https://www.youtube.com/watch?v=' + song.id, { discordPlayerCompatibility: true, precache: true })
-        const resource = dvoice.createAudioResource(stream.stream, { inputType: stream.type })
-        players.get(guildId).player.play(resource)
-        players.get(guildId).nowPlaying = song
-        players.get(guildId).queue.shift()
-        const channel = await client.channels.fetch(song.channel)
-        channel?.send({
-            embeds: [
-                {
-                    author: { name: song.author.name, icon_url: song.author.thumbnails[0].url },
-                    title: "💽 Now Playing : " + song.title,
-                    image: { url: song.thumbnail.url },
-                    footer: { text: interaction.member.user.tag, icon_url: interaction.member.user.displayAvatarURL({ dynamic: true }) },
-                    color: "#0099ff"
-                }
-            ],
-            components: [
-                {
-                    type: 1,
-                    components: [
-                        {
-                            type: 2,
-                            emoji: "▶️",
-                            custom_id: "cmdplay" + guildId,
-                            style: 2
-                        },
-                        {
-                            type: 2,
-                            emoji: "⏸️",
-                            custom_id: "cmdpause" + guildId,
-                            style: 2
-                        },
-                        {
-                            type: 2,
-                            emoji: "⏭️",
-                            custom_id: "cmdskip" + guildId,
-                            style: 2
-                        },
-                    ]
-                }
-            ]
-        }).catch(e => {
-            console.log(e)
-        })
+        if (song.isMP3) {
+            const resource = dvoice.createAudioResource(song.url)
+            players.get(guildId).player.play(resource)
+            players.get(guildId).nowPlaying = song
+            players.get(guildId).queue.shift()
+            const channel = await client.channels.fetch(song.channel)
+            channel?.send({
+                embeds: [
+                    {
+                        title: "💽 Now Playing : " + song.title,
+                        description: "Playing this song from [" + song.title + "](" + song.url + ") !",
+                        footer: { text: interaction.member.user.tag, icon_url: interaction.member.user.displayAvatarURL({ dynamic: true }) },
+                        color: "#0099ff"
+                    }
+                ],
+                components: [
+                    {
+                        type: 1,
+                        components: [
+                            {
+                                type: 2,
+                                emoji: "▶️",
+                                custom_id: "cmdplay" + guildId,
+                                style: 2
+                            },
+                            {
+                                type: 2,
+                                emoji: "⏸️",
+                                custom_id: "cmdpause" + guildId,
+                                style: 2
+                            },
+                            {
+                                type: 2,
+                                emoji: "⏭️",
+                                custom_id: "cmdskip" + guildId,
+                                style: 2
+                            },
+                        ]
+                    }
+                ]
+            }).catch(e => {
+                console.log(e)
+            })
+        } else {
+            const stream = await play.stream('https://www.youtube.com/watch?v=' + song.id, { discordPlayerCompatibility: true, precache: true })
+            const resource = dvoice.createAudioResource(stream.stream, { inputType: stream.type })
+            players.get(guildId).player.play(resource)
+            players.get(guildId).nowPlaying = song
+            players.get(guildId).queue.shift()
+            const channel = await client.channels.fetch(song.channel)
+            channel?.send({
+                embeds: [
+                    {
+                        author: { name: song.author.name, icon_url: song.author.thumbnails[0].url },
+                        title: "💽 Now Playing : " + song.title,
+                        image: { url: song.thumbnail.url },
+                        footer: { text: song.member.user.tag, icon_url: song.member.user.displayAvatarURL({ dynamic: true }) },
+                        color: "#0099ff"
+                    }
+                ],
+                components: [
+                    {
+                        type: 1,
+                        components: [
+                            {
+                                type: 2,
+                                emoji: "▶️",
+                                custom_id: "cmdplay" + guildId,
+                                style: 2
+                            },
+                            {
+                                type: 2,
+                                emoji: "⏸️",
+                                custom_id: "cmdpause" + guildId,
+                                style: 2
+                            },
+                            {
+                                type: 2,
+                                emoji: "⏭️",
+                                custom_id: "cmdskip" + guildId,
+                                style: 2
+                            },
+                        ]
+                    }
+                ]
+            }).catch(e => {
+                console.log(e)
+            })
+        }
     }
     else {
         console.log("No More Songs in queue")
@@ -198,8 +247,18 @@ client.on("playSong", async (interaction) => {
 })
 
 client.on("addSong", async (song, voiceChannel, interaction) => {
-    if (players.get(voiceChannel.guild.id)) {
-        players.get(voiceChannel.guild.id).queue.push(song)
+    if (players.get(interaction.guild.id)) {
+        if (song.isAnMP3) {
+            const songMP3 = {
+                title: song.name,
+                url: song.url,
+                channel: interaction.channel.id,
+                isMP3: true
+            }
+            players.get(voiceChannel.guild.id).queue.push(songMP3)
+        } else {
+            players.get(voiceChannel.guild.id).queue.push(song)
+        }
         console.log(song.title + " added to queue")
         console.log(players.get(voiceChannel.guild.id))
     }
@@ -228,7 +287,8 @@ client.on("addSong", async (song, voiceChannel, interaction) => {
             if (newState.status == "idle") {
                 console.log("Player changed state !")
                 if (players.get(voiceChannel.guild.id) && players.get(voiceChannel.guild.id).queue.length > 0) {
-                    client.emit("playSong", voiceChannel.guild.id)
+                    console.log("Switching to next song in queue")
+                    client.emit("playSong", {guildId: voiceChannel.guild.id})
                 }
                 else {
                     players.delete(voiceChannel.guild.id)
@@ -239,7 +299,17 @@ client.on("addSong", async (song, voiceChannel, interaction) => {
             console.log(err)
         })
         players.get(voiceChannel.guild.id).connection.subscribe(players.get(voiceChannel.guild.id).player)
-        players.get(voiceChannel.guild.id).queue.push(song)
+        if (song.isAnMP3) {
+            const songMP3 = {
+                title: song.name,
+                url: song.url,
+                channel: interaction.channel.id,
+                isMP3: true
+            }
+            players.get(voiceChannel.guild.id).queue.push(songMP3)
+        } else {
+            players.get(voiceChannel.guild.id).queue.push(song)
+        }
         client.emit("playSong", interaction)
     }
 })
