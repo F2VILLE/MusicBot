@@ -142,8 +142,8 @@ client.on("resumeSong", async (interaction) => {
 })
 
 client.on("playSong", async (interaction) => {
-    const guildId = interaction.guildId
     console.log("PLAYSONG EVENT")
+    const guildId = interaction.guildId
     if (players.get(guildId)?.queue.length) {
         console.log(players.get(guildId)?.queue)
         const song = players.get(guildId).queue[0]
@@ -191,6 +191,7 @@ client.on("playSong", async (interaction) => {
                 console.log(e)
             })
         } else {
+            console.log("[193] ID :", song.id)
             const stream = await play.stream('https://www.youtube.com/watch?v=' + song.id, { discordPlayerCompatibility: true, precache: true })
             const resource = dvoice.createAudioResource(stream.stream, { inputType: stream.type })
             players.get(guildId).player.play(resource)
@@ -259,8 +260,6 @@ client.on("addSong", async (song, voiceChannel, interaction) => {
         } else {
             players.get(voiceChannel.guild.id).queue.push(song)
         }
-        console.log(song.title + " added to queue")
-        console.log(players.get(voiceChannel.guild.id))
     }
     else {
         let connection = dvoice.getVoiceConnection(voiceChannel.guild.id)
@@ -271,6 +270,22 @@ client.on("addSong", async (song, voiceChannel, interaction) => {
                 adapterCreator: voiceChannel.guild.voiceAdapterCreator
             })
             connection = dvoice.getVoiceConnection(voiceChannel.guild.id)
+
+            // TRYING FIX TIMEOUT
+            const networkStateChangeHandler = (oldNetworkState, newNetworkState) => {
+                const newUdp = Reflect.get(newNetworkState, 'udp');
+                clearInterval(newUdp?.keepAliveInterval);
+            }
+
+            connection.on('stateChange', (oldState, newState) => {
+                const oldNetworking = Reflect.get(oldState, 'networking');
+                const newNetworking = Reflect.get(newState, 'networking');
+
+                oldNetworking?.off('stateChange', networkStateChangeHandler);
+                newNetworking?.on('stateChange', networkStateChangeHandler);
+            });
+            // ======================== =================
+
             connection.on(dvoice.VoiceConnectionStatus.Disconnected, async (oldState, newState) => {
                 try {
                     await Promise.race([
@@ -288,7 +303,7 @@ client.on("addSong", async (song, voiceChannel, interaction) => {
                 console.log("Player changed state !")
                 if (players.get(voiceChannel.guild.id) && players.get(voiceChannel.guild.id).queue.length > 0) {
                     console.log("Switching to next song in queue")
-                    client.emit("playSong", {guildId: voiceChannel.guild.id})
+                    client.emit("playSong", { guildId: voiceChannel.guild.id })
                 }
                 else {
                     players.delete(voiceChannel.guild.id)
