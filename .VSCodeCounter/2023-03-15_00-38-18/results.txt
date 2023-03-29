@@ -1,0 +1,50 @@
+Date : 2023-03-15 00:38:18
+Directory : g:\Dev\MusicBotF2Git
+Total : 21 files,  4864 codes, 69 comments, 69 blanks, all 5002 lines
+
+Languages
++------------+------------+------------+------------+------------+------------+
+| language   | files      | code       | comment    | blank      | total      |
++------------+------------+------------+------------+------------+------------+
+| JSON       |          3 |      3,855 |          0 |          1 |      3,856 |
+| JavaScript |         17 |      1,008 |         69 |         67 |      1,144 |
+| Markdown   |          1 |          1 |          0 |          1 |          2 |
++------------+------------+------------+------------+------------+------------+
+
+Directories
++--------------------------------------------------+------------+------------+------------+------------+------------+
+| path                                             | files      | code       | comment    | blank      | total      |
++--------------------------------------------------+------------+------------+------------+------------+------------+
+| .                                                |         21 |      4,864 |         69 |         69 |      5,002 |
+| . (Files)                                        |          5 |      4,168 |          2 |         20 |      4,190 |
+| commands                                         |         12 |        553 |         48 |         35 |        636 |
+| events                                           |          4 |        143 |         19 |         14 |        176 |
++--------------------------------------------------+------------+------------+------------+------------+------------+
+
+Files
++--------------------------------------------------+------------+------------+------------+------------+------------+
+| filename                                         | language   | code       | comment    | blank      | total      |
++--------------------------------------------------+------------+------------+------------+------------+------------+
+| g:\Dev\MusicBotF2Git\README.md                   | Markdown   |          1 |          0 |          1 |          2 |
+| g:\Dev\MusicBotF2Git\commands\clear.js           | JavaScript |         69 |          4 |          1 |         74 |
+| g:\Dev\MusicBotF2Git\commands\embed.js           | JavaScript |         94 |          4 |          5 |        103 |
+| g:\Dev\MusicBotF2Git\commands\lyrics.js          | JavaScript |         59 |          4 |          5 |         68 |
+| g:\Dev\MusicBotF2Git\commands\nowplaying.js      | JavaScript |         10 |          4 |          1 |         15 |
+| g:\Dev\MusicBotF2Git\commands\pause.js           | JavaScript |         15 |          4 |          3 |         22 |
+| g:\Dev\MusicBotF2Git\commands\ping.js            | JavaScript |         25 |          4 |          1 |         30 |
+| g:\Dev\MusicBotF2Git\commands\play.js            | JavaScript |        108 |          4 |          8 |        120 |
+| g:\Dev\MusicBotF2Git\commands\playmp3.js         | JavaScript |         48 |          4 |          2 |         54 |
+| g:\Dev\MusicBotF2Git\commands\queue.js           | JavaScript |         15 |          4 |          2 |         21 |
+| g:\Dev\MusicBotF2Git\commands\resume.js          | JavaScript |         15 |          4 |          3 |         22 |
+| g:\Dev\MusicBotF2Git\commands\skip.js            | JavaScript |         15 |          4 |          3 |         22 |
+| g:\Dev\MusicBotF2Git\commands\ticketmessage.js   | JavaScript |         80 |          4 |          1 |         85 |
+| g:\Dev\MusicBotF2Git\config.json                 | JSON       |          9 |          0 |          0 |          9 |
+| g:\Dev\MusicBotF2Git\events\guildMemberAdd.js    | JavaScript |         31 |          5 |          6 |         42 |
+| g:\Dev\MusicBotF2Git\events\interactionCreate.js | JavaScript |         61 |          5 |          1 |         67 |
+| g:\Dev\MusicBotF2Git\events\messageCreate.js     | JavaScript |         37 |          5 |          2 |         44 |
+| g:\Dev\MusicBotF2Git\events\ready.js             | JavaScript |         14 |          4 |          5 |         23 |
+| g:\Dev\MusicBotF2Git\index.js                    | JavaScript |        312 |          2 |         18 |        332 |
+| g:\Dev\MusicBotF2Git\package-lock.json           | JSON       |      3,809 |          0 |          1 |      3,810 |
+| g:\Dev\MusicBotF2Git\package.json                | JSON       |         37 |          0 |          0 |         37 |
+| Total                                            |            |      4,864 |         69 |         69 |      5,002 |
++--------------------------------------------------+------------+------------+------------+------------+------------+
