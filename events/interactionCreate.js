@@ -12,7 +12,10 @@ module.exports = {
             client.commands.get(interaction.commandName)?.run(interaction)
         }
         else if (interaction.isButton()) {
-            if (interaction.customId.startsWith("play_music_")) {
+            if (interaction.customId.startsWith("cancel_search_")) {
+                interaction.message.delete()
+            }
+            else if (interaction.customId.startsWith("play_music_")) {
                 console.log("MUSIC CHOSEN")
                 const guildId = interaction.customId.split("_")[2]
                 const ytcode = interaction.customId.replace("play_music_" + guildId + "_", "")
@@ -26,7 +29,7 @@ module.exports = {
                                 {
                                     title: "Song added to queue",
                                     description: `${infos.videoDetails.title} has been added to the playlist !`,
-                                    color: "#0099ff"
+                                    color: 0x0099ff
                                 }
                             ]
                         }).then(() => {

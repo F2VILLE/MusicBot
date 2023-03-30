@@ -1,9 +1,19 @@
 const Discord = require("discord.js"),
     fs = require("fs"),
-    client = new Discord.Client({ intents: ["GUILDS", "GUILD_MEMBERS", "GUILD_MESSAGES", "GUILD_MESSAGE_REACTIONS", "GUILD_MESSAGE_TYPING", "DIRECT_MESSAGES", "GUILD_INTEGRATIONS", "GUILD_PRESENCES", "GUILD_VOICE_STATES"] }),
+    client = new Discord.Client({
+        intents: [
+            Discord.IntentsBitField.Flags.GuildIntegrations,
+            Discord.IntentsBitField.Flags.GuildMembers,
+            Discord.IntentsBitField.Flags.GuildMessages,
+            Discord.IntentsBitField.Flags.GuildVoiceStates,
+            Discord.IntentsBitField.Flags.Guilds,
+            Discord.IntentsBitField.Flags.MessageContent,
+            Discord.IntentsBitField.Flags.GuildMessageReactions
+        ]
+    }),
     dvoice = require("@discordjs/voice"),
     play = require('play-dl');
-
+const ms = require("ms")
 require("dotenv").config()
 
 client.commands = new Discord.Collection()
@@ -37,9 +47,10 @@ client.on("nowPlaying", (interaction) => {
             {
                 author: { name: song.author.name, icon_url: song.author.thumbnails[0].url },
                 title: "💽 Now Playing : " + song.title,
+                description: secondsToTime(song.duration),
                 image: { url: song.thumbnail.url },
                 footer: { text: song.member.user.tag, icon_url: song.member.user.displayAvatarURL({ dynamic: true }) },
-                color: "#0099ff"
+                color: 0x0099ff
             }
         ],
         components: [
@@ -85,24 +96,86 @@ client.on("skipSong", (interaction) => {
             {
                 title: "⏭️ Song skipped",
                 description: "The current song has been skipped!",
-                color: "#0099ff"
+                color: 0x0099ff
             }
         ]
     })
 })
 
-client.on("queueSong", (interaction) => {
-    const songs = players.get(interaction.guildId)?.queue
-    if (songs) {
-        let i = 0
+client.on("queueSong", async (interaction) => {
+    const songs = [...players.get(interaction.guildId)?.queue]
+    songs.unshift(players.get(interaction.guildId).nowPlaying)
+    if (songs && songs.length > 0) {
+        const embeds = []
+        let songIndex = 1
+        const formatedSongs = songs.map(x => {
+            return "`[" + (songIndex++) + "]`" + x.title + " (" + secondsToTime(x.duration) + ")\n"
+        })
+
+        let embedIndex = 0
+
+        const indexBar = "○".repeat(Math.ceil(formatedSongs.length / 5))
+        console.log()
+        for (let i = 0; i < formatedSongs.length; i += 5) {
+            const embedSongs = [...formatedSongs].slice(i, i + 5)
+            embeds.push({
+                title: "🎵 Songs in queue",
+                description: embedSongs.join("\n"),
+                footer: { text: "○ ".repeat(i/5) + "◉ " + "○ ".repeat(Math.ceil(formatedSongs.length/5) - (i/5 + 1))},
+                color: 0x0099ff
+            })
+        }
+        interaction.reply({
+            embeds: [
+                embeds[0]
+            ]
+        }).then(() => {
+            interaction.fetchReply().then(async (msg) => {
+                console.log(msg)
+                if (embeds.length > 1) {
+                    msg.react("⬅️")
+                    msg.react("➡️")
+                    const filter = (reaction, user) => ["⬅️", "➡️"].includes(reaction.emoji.name) && user.id == interaction.user.id;
+
+                    const collector = msg.createReactionCollector({ filter, time: 85000 })
+
+                    collector.on("collect", async (r) => {
+                        switch (r.emoji.name) {
+                            case "⬅️":
+                                embedIndex == 0 ? embedIndex = embeds.length - 1 : embedIndex--
+                                break;
+                            case "➡️":
+                                embedIndex < embeds.length - 1 ? embedIndex++ : embedIndex = 0
+                                break;
+                        }
+                        const userReactions = msg.reactions.cache.filter(reaction => reaction.users.cache.has(interaction.user.id));
+
+                        try {
+                            for await (const reaction of userReactions.values()) {
+                                await reaction.users.remove(interaction.user.id);
+                            }
+                        } catch (error) {
+                            console.error('Failed to remove reactions.');
+                        }
+
+                        msg.edit({
+                            embeds: [
+                                embeds[embedIndex]
+                            ]
+                        })
+                    })
+                }
+            })
+        })
+
+    }
+    else {
         interaction.reply({
             embeds: [
                 {
-                    title: "🎵 Songs in queue",
-                    description: songs.map(x => {
-                        "`[" + (i++) + "]`" + x.title + " (" + secondsToTime(x.duration) + ")\n"
-                    }),
-                    color: "#0099ff"
+                    title: "🎵 There's no song in queue",
+                    description: "To add a song, use </play:1088589745266896973>",
+                    color: 0x0099ff
                 }
             ]
         })
@@ -118,7 +191,7 @@ client.on("pauseSong", async (interaction) => {
                     author: { name: interaction.member.user.tag, icon_url: interaction.member.user.displayAvatarURL({ dynamic: true }) },
                     title: "⏸ Song paused",
                     description: "The current song has been paused !",
-                    color: "#0099ff"
+                    color: 0x0099ff
                 }
             ]
         })
@@ -134,7 +207,7 @@ client.on("resumeSong", async (interaction) => {
                     author: { name: interaction.member.user.tag, icon_url: interaction.member.user.displayAvatarURL({ dynamic: true }) },
                     title: "▶️ Song resumed",
                     description: "The music has been resumed !",
-                    color: "#0099ff"
+                    color: 0x0099ff
                 }
             ]
         })
@@ -159,7 +232,7 @@ client.on("playSong", async (interaction) => {
                         title: "💽 Now Playing : " + song.title,
                         description: "Playing this song from [" + song.title + "](" + song.url + ") !",
                         footer: { text: interaction.member.user.tag, icon_url: interaction.member.user.displayAvatarURL({ dynamic: true }) },
-                        color: "#0099ff"
+                        color: 0x0099ff
                     }
                 ],
                 components: [
@@ -191,7 +264,7 @@ client.on("playSong", async (interaction) => {
                 console.log(e)
             })
         } else {
-            console.log("[193] ID :", song.id)
+            console.log("SONG :", song)
             const stream = await play.stream('https://www.youtube.com/watch?v=' + song.id, { discordPlayerCompatibility: true, precache: true })
             const resource = dvoice.createAudioResource(stream.stream, { inputType: stream.type })
             players.get(guildId).player.play(resource)
@@ -205,7 +278,7 @@ client.on("playSong", async (interaction) => {
                         title: "💽 Now Playing : " + song.title,
                         image: { url: song.thumbnail.url },
                         footer: { text: song.member.user.tag, icon_url: song.member.user.displayAvatarURL({ dynamic: true }) },
-                        color: "#0099ff"
+                        color: 0x0099ff
                     }
                 ],
                 components: [

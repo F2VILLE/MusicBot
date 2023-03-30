@@ -38,7 +38,7 @@ module.exports = {
                             embeds: [{
                                 title: gsong.title,
                                 description: lyrics.substring(i, i + 2040),
-                                color: "#0099ff"
+                                color: 0x0099ff
                             }]
                         });
                     }
@@ -48,7 +48,7 @@ module.exports = {
                         embeds: [{
                             title: gsong.title,
                             description: lyrics,
-                            color: "#0099ff"
+                            color: 0x0099ff
                         }]
                     });
                 }

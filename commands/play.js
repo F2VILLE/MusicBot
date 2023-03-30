@@ -41,6 +41,9 @@ module.exports = {
         }
         play.validate(song).then(type => {
             console.log("Type :", type)
+            if (type == "search") {
+                if (song.startsWith("http") && play.yt_validate(url) === 'video') type = "yt_video"
+            }
             if (type == "yt_video") {
                 console.log("it's URL !")
                 ytdl.getBasicInfo(song).then(infos => {
@@ -50,8 +53,8 @@ module.exports = {
                         embeds: [
                             {
                                 title: "Song added to queue",
-                                description: `${infos.videoDetails.title} has been added to the playlist !`,
-                                color: "#0099ff"
+                                description: `${infos.videoDetails.title} has been added to the queue !`,
+                                color: 0x0099ff
                             }
                         ]
                     })
@@ -67,13 +70,32 @@ module.exports = {
                         })
                     })
             }
+            else if (type == "yt_playlist") {
+                play.playlist_info(song).then(playlist => {
+                    playlist.all_videos().then(async videos => {
+                        for await (const video of videos) {
+                            console.log("CHANNEL ICON URL", video.channel)
+                            interaction.client.emit('addSong', { id: video.id, duration: video.durationInSec, title: video.title, thumbnail: video.thumbnails.pop(), channel: interaction.channelId, author: {name: video.channel.name, thumbnails: [(video.channel.iconURL() || interaction.client.user.avatarURL())]}, member: interaction.member }, voiceChannel, interaction)
+                        }
+                        interaction.reply({
+                            embeds: [
+                                {
+                                    title: "Playlist added to queue",
+                                    description: `${playlist.title} has been added to the queue !`,
+                                    color: 0x0099ff
+                                }
+                            ]
+                        })
+                    })
+                })
+            }
             else if (type == "search") {
                 yts(song, { limit: 5 }).then(res => {
                     res = res.items.filter(x => x.type === 'video')
                     let embed = {
                         title: 'Search Results',
                         fields: [],
-                        color: "#0099ff"
+                        color: 0x0099ff
                     }
 
                     for (let i = 0; i < res.length; i++) {
@@ -101,7 +123,16 @@ module.exports = {
                             {
                                 type: 1,
                                 components
-                            }
+                            },
+                            {
+                                type: 1,
+                                components: [{
+                                    type: 2,
+                                    emoji: "❌",
+                                    style: 2,
+                                    custom_id: "cancel_search_"
+                                }]
+                            },
                         ]
                     })
                 }).catch(e => {
