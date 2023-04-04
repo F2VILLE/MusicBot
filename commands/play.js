@@ -45,11 +45,12 @@ module.exports = {
             return
         }
         play.validate(song).then(type => {
-            console.log("Type :", type)
             if (type == "search") {
                 if (song.startsWith("http") && play.yt_validate(url) === 'video') type = "yt_video"
             }
-            else if (type == "sp_track") {
+            console.log("Type :", type)
+
+            if (type == "sp_track") {
                 getData(song).then((data) => {
                     yts(`${data.title} ${data.artists[0].name}`, { limit: 1 }).then(res => {
                         ytdl.getBasicInfo(res.items[0].url).then(infos => {
@@ -139,7 +140,9 @@ module.exports = {
                 })
             }
             else if (type == "search") {
+                console.log("searching " + song)
                 yts(song, { limit: 5 }).then(res => {
+                    console.log(res)
                     res = res.items.filter(x => x.type === 'video')
                     let embed = {
                         title: 'Search Results',
@@ -185,6 +188,7 @@ module.exports = {
                         ]
                     })
                 }).catch(e => {
+                    console.error(e)
                     interaction.reply({
                         embeds: [{
                             title: ':x: Error',
