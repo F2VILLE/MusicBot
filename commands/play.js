@@ -1,7 +1,12 @@
 const Discord = require("discord.js"),
     yts = require("ytsr"),
     play = require('play-dl'),
-    ytdl = require("ytdl-core")
+    ytdl = require("ytdl-core"),
+    fetch = require('isomorphic-unfetch'),
+    { getData } = require("spotify-url-info")(fetch)
+
+require("dotenv").config()
+
 const emojiNumbers = [
     "0️⃣",
     "1️⃣",
@@ -23,7 +28,7 @@ module.exports = {
             {
                 type: 3,
                 name: 'song',
-                description: 'The song name or YT URL',
+                description: 'The song name, YouTube URL or Spotify URL',
                 required: true
             }
         ]
@@ -44,7 +49,51 @@ module.exports = {
             if (type == "search") {
                 if (song.startsWith("http") && play.yt_validate(url) === 'video') type = "yt_video"
             }
-            if (type == "yt_video") {
+            else if (type == "sp_track") {
+                getData(song).then((data) => {
+                    yts(`${data.title} ${data.artists[0].name}`, { limit: 1 }).then(res => {
+                        ytdl.getBasicInfo(res.items[0].url).then(infos => {
+                            interaction.client.emit('addSong', { id: infos.videoDetails.videoId, duration: infos.videoDetails.lengthSeconds, title: infos.videoDetails.title, thumbnail: infos.videoDetails.thumbnails.pop(), channel: interaction.channelId, author: infos.videoDetails.author, member: interaction.member }, voiceChannel, interaction)
+                            interaction.reply({
+                                embeds: [
+                                    {
+                                        title: "Song added to queue",
+                                        description: `${infos.videoDetails.title} has been added to the queue !`,
+                                        color: 0x0099ff
+                                    }
+                                ]
+                            })
+                        })
+                            .catch(err => {
+                                console.error(err)
+                                interaction.reply({
+                                    embeds: [{
+                                        title: "Error",
+                                        description: err.message,
+                                        color: "#ff0000"
+                                    }]
+                                })
+                            })
+                    }).catch(e => {
+                        interaction.reply({
+                            embeds: [{
+                                title: ':x: Error',
+                                description: e.message
+                            }]
+                        })
+                    })
+
+                }).catch((err => {
+                    interaction.reply({
+                        embeds: [{
+                            title: ':x: Error',
+                            description: e.message
+                        }]
+                    })
+                }))
+
+            }
+            else if (type == "yt_video") {
                 console.log("it's URL !")
                 ytdl.getBasicInfo(song).then(infos => {
                     interaction.client.emit('addSong', { id: infos.videoDetails.videoId, duration: infos.videoDetails.lengthSeconds, title: infos.videoDetails.title, thumbnail: infos.videoDetails.thumbnails.pop(), channel: interaction.channelId, author: infos.videoDetails.author, member: interaction.member }, voiceChannel, interaction)
@@ -75,7 +124,7 @@ module.exports = {
                     playlist.all_videos().then(async videos => {
                         for await (const video of videos) {
                             console.log("CHANNEL ICON URL", video.channel)
-                            interaction.client.emit('addSong', { id: video.id, duration: video.durationInSec, title: video.title, thumbnail: video.thumbnails.pop(), channel: interaction.channelId, author: {name: video.channel.name, thumbnails: [(video.channel.iconURL() || interaction.client.user.avatarURL())]}, member: interaction.member }, voiceChannel, interaction)
+                            interaction.client.emit('addSong', { id: video.id, duration: video.durationInSec, title: video.title, thumbnail: video.thumbnails.pop(), channel: interaction.channelId, author: { name: video.channel.name, thumbnails: [(video.channel.iconURL() || interaction.client.user.avatarURL())] }, member: interaction.member }, voiceChannel, interaction)
                         }
                         interaction.reply({
                             embeds: [

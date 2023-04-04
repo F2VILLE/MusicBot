@@ -108,14 +108,13 @@ client.on("queueSong", async (interaction) => {
     if (songs && songs.length > 0) {
         const embeds = []
         let songIndex = 1
-        const formatedSongs = songs.map(x => {
-            return "`[" + (songIndex++) + "]`" + x.title + " (" + secondsToTime(x.duration) + ")\n"
+        const formatedSongs = songs.map((x, i) => {
+            return (i == 0 ? "**" : "") + "`[" + (songIndex++) + "]`" + x.title + " (" + secondsToTime(x.duration) + ")\n" + (i == 0 ? "** - Now playing" : "")
         })
 
         let embedIndex = 0
 
         const indexBar = "○".repeat(Math.ceil(formatedSongs.length / 5))
-        console.log()
         for (let i = 0; i < formatedSongs.length; i += 5) {
             const embedSongs = [...formatedSongs].slice(i, i + 5)
             embeds.push({

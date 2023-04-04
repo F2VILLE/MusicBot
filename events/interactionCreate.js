@@ -23,7 +23,6 @@ module.exports = {
                 if (voiceChannel) {
                     ytdl.getBasicInfo("https://www.youtube.com/watch?v=" + ytcode).then(infos => {
                         client.emit('addSong', { id: infos.videoDetails.videoId, duration: infos.videoDetails.lengthSeconds, title: infos.videoDetails.title, thumbnail: infos.videoDetails.thumbnails.pop(), channel: interaction.channelId, author: infos.videoDetails.author, member: interaction.member }, voiceChannel, interaction)
-                        console.log("EMITED ADDSONG EVENT")
                         interaction.reply({
                             embeds: [
                                 {
