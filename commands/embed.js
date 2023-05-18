@@ -53,7 +53,7 @@ module.exports = {
                 description: "Texte du bas de page",
             },
         ],
-        default_permission: false
+        default_member_permissions: false
     },
     /**
      * 
